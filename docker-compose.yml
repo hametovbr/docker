@@ -67,14 +67,3 @@ services:
       - ./linkwarden/data:/data/data
     depends_on:
       - postgres
-
-  samba:
-    image: begna112/docker-samba:latest
-    container_name: samba
-    network_mode: host
-    env_file:
-      - compose.env
-    volumes:
-      - ./samba/data:/data
-      - ./samba/share:/share
-    restart: unless-stopped
