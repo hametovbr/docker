@@ -1,13 +1,11 @@
 services:
   metube:
     container_name: metube
-    environment:
-      - OUTPUT_TEMPLATE=%(display_id)s.%(ext)s
-      - YTDL_OPTIONS={ "format":"bestvideo[vcodec=h264]+bestaudio[ext=m4a]/best[ext=mp4]", "cookiefile":"/cookies/cookies.txt" }
-      - DOWNLOAD_DIR=/downloads
     image: ghcr.io/alexta69/metube:latest
     ports:
       - 90:8081
+    env_file:
+      - compose.env
     volumes:
       - ./metube/downloads:/downloads
       - ./metube/cookies:/cookies
@@ -16,11 +14,8 @@ services:
   calibre-web-automated:
     container_name: calibre-web-automated
     image: crocodilestick/calibre-web-automated:latest
-    environment:
-      - PUID=1000
-      - PGID=100
-      - TZ=UTC
-      - DOCKER_MODS=lscr.io/linuxserver/mods:universal-calibre-v7.16.0
+    env_file:
+      - compose.env
     volumes:
       - ./calibre-web-automated/config:/config
       - ./calibre-web-automated/ingest:/cwa-book-ingest
@@ -33,6 +28,8 @@ services:
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower
+    env_file:
+      - compose.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -43,6 +40,8 @@ services:
       - 8000:8000
       - 9443:9443
     restart: always
+    env_file:
+      - compose.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./portainer_data:/data
@@ -50,21 +49,18 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: postgres
-    environment:
-      - POSTGRES_PASSWORD=<PLACEHOLDER>
-      - DATABASE_URL=postgresql://postgres:<PLACEHOLDER>@postgres:5432/postgres
     restart: always
+    env_file:
+      - compose.env
     volumes:
       - ./pgdata:/var/lib/postgresql/data
 
   linkwarden:
     container_name: linkwarden
-    environment:
-      - NEXTAUTH_URL=http://localhost:3000/api/v1/auth
-      - NEXTAUTH_SECRET=<PLACEHOLDER>
-      - DATABASE_URL=postgresql://postgres:<PLACEHOLDER>@postgres:5432/postgres
     restart: always
     image: ghcr.io/linkwarden/linkwarden:latest
+    env_file:
+      - compose.env
     ports:
       - 100:3000
     volumes:
@@ -76,19 +72,9 @@ services:
     image: begna112/docker-samba:latest
     container_name: samba
     network_mode: host
+    env_file:
+      - compose.env
     volumes:
       - ./samba/data:/data
       - ./samba/share:/share
-    environment:
-      - TZ=Europe/Moscow
-      - SAMBA_LOG_LEVEL=0
-      - SAMBA_WORKGROUP=WORKGROUP
-      - SAMBA_SERVER_STRING=Docker Samba Server
-      - SAMBA_HOSTS_ALLOW=127.0.0.1 192.168.100.0/24
-      - SAMBA_DISABLE_NETBIOS=no
-      - SAMBA_NETBIOS_NAME=LINUXSERVER
-      - SAMBA_CREATE_MASK=0775
-      - SAMBA_FORCE_CREATE_MODE=0775
-      - SAMBA_DIRECTORY_MASK=0775
-      - SAMBA_FORCE_DIRECTORY_MODE=0775
     restart: unless-stopped
