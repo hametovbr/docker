@@ -9,8 +9,8 @@ services:
     ports:
       - 90:8081
     volumes:
-      - .\metube\downloads:/downloads
-      - .\metube\cookies:/cookies
+      - ./metube/downloads:/downloads
+      - ./metube/cookies:/cookies
     restart: unless-stopped
 
   calibre-web-automated:
@@ -22,16 +22,17 @@ services:
       - TZ=UTC
       - DOCKER_MODS=lscr.io/linuxserver/mods:universal-calibre-v7.16.0
     volumes:
-      - .\calibre-web-automated\config:/config
-      - .\calibre-web-automated/ingest:/cwa-book-ingest
-      - .\calibre-web-automated/calibre-lib:/calibre-library
-      - .\calibre-web-automated/books:/books
+      - ./calibre-web-automated/config:/config
+      - ./calibre-web-automated/ingest:/cwa-book-ingest
+      - ./calibre-web-automated/calibre-lib:/calibre-library
+      - ./calibre-web-automated/books:/books
     ports:
       - 8084:8083
     restart: unless-stopped
     
   watchtower:
     image: containrrr/watchtower
+    container_name: watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -44,4 +45,50 @@ services:
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - .\portainer_data:/data
+      - ./portainer_data:/data
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_PASSWORD=<PLACEHOLDER>
+      - DATABASE_URL=postgresql://postgres:<PLACEHOLDER>@postgres:5432/postgres
+    restart: always
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+
+  linkwarden:
+    container_name: linkwarden
+    environment:
+      - NEXTAUTH_URL=http://localhost:3000/api/v1/auth
+      - NEXTAUTH_SECRET=<PLACEHOLDER>
+      - DATABASE_URL=postgresql://postgres:<PLACEHOLDER>@postgres:5432/postgres
+    restart: always
+    image: ghcr.io/linkwarden/linkwarden:latest
+    ports:
+      - 100:3000
+    volumes:
+      - ./linkwarden/data:/data/data
+    depends_on:
+      - postgres
+
+  samba:
+    image: begna112/docker-samba:latest
+    container_name: samba
+    network_mode: host
+    volumes:
+      - ./samba/data:/data
+      - ./samba/share:/share
+    environment:
+      - TZ=Europe/Moscow
+      - SAMBA_LOG_LEVEL=0
+      - SAMBA_WORKGROUP=WORKGROUP
+      - SAMBA_SERVER_STRING=Docker Samba Server
+      - SAMBA_HOSTS_ALLOW=127.0.0.1 192.168.100.0/24
+      - SAMBA_DISABLE_NETBIOS=no
+      - SAMBA_NETBIOS_NAME=LINUXSERVER
+      - SAMBA_CREATE_MASK=0775
+      - SAMBA_FORCE_CREATE_MODE=0775
+      - SAMBA_DIRECTORY_MASK=0775
+      - SAMBA_FORCE_DIRECTORY_MODE=0775
+    restart: unless-stopped
