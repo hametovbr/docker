@@ -67,3 +67,62 @@ services:
       - ./linkwarden/data:/data/data
     depends_on:
       - postgres
+      
+  stash:
+    image: stashapp/stash:latest
+    container_name: stash
+    restart: unless-stopped
+    ports:
+      - 9999:9999
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "10"
+        max-size: "2m"
+    env_file:
+      - compose.env
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./stash/config:/root/.stash
+      - ./stash/data:/data
+      - ./stash/gallery:/gallery
+      - ./stash/metadata:/metadata
+      - ./stash/cache:/cache
+      - ./stash/blobs:/blobs
+      - ./stash/generated:/generated
+      
+  tinymediamanager:
+    image: tinymediamanager/tinymediamanager:latest
+    container_name: tinymediamanager
+    env_file:
+      - compose.env
+    volumes:
+      - ./tinymediamanager/data:/data
+      - ./tinymediamanager/media:/media
+      - ./tinymediamanager/app/addons:/app/addons
+    ports:
+      - 5900:5900
+      - 4000:4000
+    restart: unless-stopped
+
+  jdownloader:
+    image: jlesage/jdownloader-2
+    container_name: jdownloader
+    restart: unless-stopped
+    ports:
+      - 5800:5800
+    volumes:
+      - ./jdownloader/config:/config:rw
+      - ./jdownloader/downloads:/output:rw
+
+  homarr:
+    container_name: homarr
+    image: ghcr.io/ajnart/homarr:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./homarr/configs:/app/data/configs
+      - ./homarr/icons:/app/public/icons
+      - ./homarr/data:/data
+    ports:
+      - 7575:7575
