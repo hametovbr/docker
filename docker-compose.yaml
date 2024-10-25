@@ -1,0 +1,128 @@
+services:
+  metube:
+    container_name: metube
+    image: ghcr.io/alexta69/metube:latest
+    ports:
+      - 90:8081
+    env_file:
+      - compose.env
+    volumes:
+      - ./metube/downloads:/downloads
+      - ./metube/cookies:/cookies
+    restart: unless-stopped
+
+  calibre-web-automated:
+    container_name: calibre-web-automated
+    image: crocodilestick/calibre-web-automated:latest
+    env_file:
+      - compose.env
+    volumes:
+      - ./calibre-web-automated/config:/config
+      - ./calibre-web-automated/ingest:/cwa-book-ingest
+      - ./calibre-web-automated/calibre-lib:/calibre-library
+      - ./calibre-web-automated/books:/books
+    ports:
+      - 8084:8083
+    restart: unless-stopped
+    
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    env_file:
+      - compose.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    ports:
+      - 8000:8000
+      - 9443:9443
+    restart: always
+    env_file:
+      - compose.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./portainer_data:/data
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: always
+    env_file:
+      - compose.env
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+
+  linkwarden:
+    container_name: linkwarden
+    restart: always
+    image: ghcr.io/linkwarden/linkwarden:latest
+    env_file:
+      - compose.env
+    ports:
+      - 100:3000
+    volumes:
+      - ./linkwarden/data:/data/data
+    depends_on:
+      - postgres
+      
+  stash:
+    image: stashapp/stash:latest
+    container_name: stash
+    restart: unless-stopped
+    ports:
+      - 9999:9999
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "10"
+        max-size: "2m"
+    env_file:
+      - compose.env
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./stash/config:/root/.stash
+      - ./stash/data:/data
+      - ./stash/gallery:/gallery
+      - ./stash/metadata:/metadata
+      - ./stash/cache:/cache
+      - ./stash/blobs:/blobs
+      - ./stash/generated:/generated
+      
+  tinymediamanager:
+    image: tinymediamanager/tinymediamanager:latest
+    container_name: tinymediamanager
+    env_file:
+      - compose.env
+    volumes:
+      - ./tinymediamanager/data:/data
+      - ./tinymediamanager/media:/media
+      - ./tinymediamanager/app/addons:/app/addons
+    ports:
+      - 5900:5900
+      - 4000:4000
+    restart: unless-stopped
+
+  jdownloader:
+    image: jlesage/jdownloader-2
+    container_name: jdownloader
+    restart: unless-stopped
+    ports:
+      - 5800:5800
+    volumes:
+      - ./jdownloader/config:/config:rw
+      - ./jdownloader/downloads:/output:rw
+
+  homarr:
+    container_name: homarr
+    image: ghcr.io/ajnart/homarr:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./homarr/configs:/app/data/configs
+      - ./homarr/icons:/app/public/icons
+      - ./homarr/data:/data
+    ports:
+      - 7575:7575
