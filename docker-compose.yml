@@ -1,26 +1,26 @@
 services:
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      
   metube:
     container_name: metube
     image: ghcr.io/alexta69/metube:latest
     ports:
       - 90:8081
     volumes:
-      - ./metube/downloads:/downloads
-      - ./metube/cookies:/cookies
+      - ~/docker/metube/downloads:/downloads
+      - ~/docker/metube/cookies:/cookies
     restart: unless-stopped
-    
-  watchtower:
-    image: containrrr/watchtower
-    container_name: watchtower
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
 
   postgres:
     image: postgres:16-alpine
     container_name: postgres
     restart: always
     volumes:
-      - ./pgdata:/var/lib/postgresql/data
+      - ~/docker/pgdata:/var/lib/postgresql/data
 
   linkwarden:
     container_name: linkwarden
@@ -29,7 +29,7 @@ services:
     ports:
       - 100:3000
     volumes:
-      - ./linkwarden/data:/data/data
+      - ~/docker/linkwarden/data:/data/data
     depends_on:
       - postgres
       
@@ -46,21 +46,21 @@ services:
         max-size: "2m"
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./stash/config:/root/.stash
-      - ./stash/data:/data
-      - ./stash/gallery:/gallery
-      - ./stash/metadata:/metadata
-      - ./stash/cache:/cache
-      - ./stash/blobs:/blobs
-      - ./stash/generated:/generated
+      - ~/docker/stash/config:/root/.stash
+      - ~/docker/stash/data:/data
+      - ~/docker/stash/gallery:/gallery
+      - ~/docker/stash/metadata:/metadata
+      - ~/docker/stash/cache:/cache
+      - ~/docker/stash/blobs:/blobs
+      - ~/docker/stash/generated:/generated
       
   tinymediamanager:
     image: tinymediamanager/tinymediamanager:latest
     container_name: tinymediamanager
     volumes:
-      - ./tinymediamanager/data:/data
-      - ./tinymediamanager/media:/media
-      - ./tinymediamanager/app/addons:/app/addons
+      - ~/docker/tinymediamanager/data:/data
+      - ~/docker/tinymediamanager/media:/media
+      - ~/docker/tinymediamanager/app/addons:/app/addons
     ports:
       - 5900:5900
       - 4000:4000
@@ -73,5 +73,5 @@ services:
     ports:
       - 5800:5800
     volumes:
-      - ./jdownloader/config:/config:rw
-      - ./jdownloader/downloads:/output:rw
+      - ~/docker/jdownloader/config:/config:rw
+      - ~/docker/jdownloader/downloads:/output:rw
