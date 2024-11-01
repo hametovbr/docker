@@ -2,32 +2,26 @@ services:
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower
+    restart: unless-stopped
+    env_file: stack.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      
-  metube:
-    container_name: metube
-    image: ghcr.io/alexta69/metube:latest
-    ports:
-      - 90:8081
-    volumes:
-      - /home/arioh/docker/metube/downloads:/downloads
-      - /home/arioh/docker/metube/cookies:/cookies
-    restart: unless-stopped
 
   postgres:
     image: postgres:16-alpine
     container_name: postgres
     restart: always
+    env_file: stack.env
     volumes:
       - /home/arioh/docker/pgdata:/var/lib/postgresql/data
 
   linkwarden:
     container_name: linkwarden
-    restart: always
+    restart: unless-stopped
     image: ghcr.io/linkwarden/linkwarden:latest
     ports:
       - 100:3000
+    env_file: stack.env
     volumes:
       - /home/arioh/docker/linkwarden/data:/data/data
     depends_on:
@@ -44,10 +38,12 @@ services:
       options:
         max-file: "10"
         max-size: "2m"
+    env_file: stack.env
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /home/arioh/docker/stash/config:/root/.stash
       - /home/arioh/docker/stash/data:/data
+      - /home/arioh/storage/stash/data:/storage
       - /home/arioh/docker/stash/gallery:/gallery
       - /home/arioh/docker/stash/metadata:/metadata
       - /home/arioh/docker/stash/cache:/cache
@@ -57,6 +53,8 @@ services:
   tinymediamanager:
     image: tinymediamanager/tinymediamanager:latest
     container_name: tinymediamanager
+    restart: unless-stopped
+    env_file: stack.env
     volumes:
       - /home/arioh/docker/tinymediamanager/data:/data
       - /home/arioh/docker/tinymediamanager/media:/media
@@ -64,7 +62,6 @@ services:
     ports:
       - 5900:5900
       - 4000:4000
-    restart: unless-stopped
 
   jdownloader:
     image: jlesage/jdownloader-2
@@ -72,6 +69,60 @@ services:
     restart: unless-stopped
     ports:
       - 5800:5800
+    env_file: stack.env
     volumes:
       - /home/arioh/docker/jdownloader/config:/config:rw
       - /home/arioh/docker/jdownloader/downloads:/output:rw
+      
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    ports:
+      - 3000:3000
+    restart: always
+    volumes:
+      - /home/arioh/docker/homepage:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: filebrowser
+    ports:
+      - 32769:80
+    restart: always
+    volumes:
+      - /home/arioh/docker/filebrowser/database.db:/database.db
+      - /home/arioh/docker/filebrowser/.filebrowser.json:/.filebrowser.json
+      - /home/arioh:/srv
+      
+  calibre:
+    image: lscr.io/linuxserver/calibre:latest
+    container_name: calibre
+    env_file: stack.env
+    environment:
+      CUSTOM_USER: admin
+      PASSWORD: admin
+      TITLE: Calibre
+    volumes:
+      - /home/arioh/docker/calibre/config:/config
+    ports:
+      - 8080:8080
+      - 8181:8181
+      - 8081:8081
+    restart: unless-stopped
+    
+  code-server:
+    image: codercom/code-server:latest
+    container_name: code-server
+    ports:
+      - 8090:8080
+    env_file: stack.env
+    environment:
+      - "DOCKER_USER=${USER}"
+    user: ${UID_GID}
+    volumes:
+      - /home/arioh/docker/code-server/.config:/home/coder/.config
+      - /home/arioh/docker/code-server/project:/home/coder/project
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    tty: true
+    
